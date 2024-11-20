@@ -3,23 +3,23 @@ import java.awt.*;
 import java.util.concurrent.Semaphore;
 
 public class Interfaz extends JFrame {
-    private JLabel[] coches; // Representa los coches en la carretera
+    private JLabel[] raptors; // Representa los raptors en la carrera
     private JButton botonIniciar; // Botón para iniciar la carrera
-    private int numCoches; // Número de coches
+    private JButton botonReiniciar; // Botón para reiniciar la carrera
+    private int numRaptors; // Número de raptors
     private int distancia; // Distancia de la carrera
-    private Semaphore semaforo; // Semáforo para sincronizar los coches
+    private Semaphore semaforo; // Semáforo para sincronizar los raptors
 
     public Interfaz() {
-        // Configurar parámetros iniciales usando JOptionPane
         configurarParametros();
 
-        setTitle("Carrera de Coches");
-        setSize(800, 400); // Tamaño fijo para la ventana
+        setTitle("Carrera de Raptors");
+        setSize(800, 400);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setLayout(null); // Usar diseño absoluto para colocar elementos manualmente
+        setLayout(null);
 
         // === SEMÁFORO ===
-        semaforo = new Semaphore(1); // Permitir acceso sincronizado a recursos compartidos
+        semaforo = new Semaphore(1);
 
         // === CREAR JLayeredPane PARA CONTROLAR CAPAS ===
         JLayeredPane layeredPane = new JLayeredPane();
@@ -32,66 +32,84 @@ public class Interfaz extends JFrame {
         fondo.setBounds(0, 0, 800, 400);
         layeredPane.add(fondo, Integer.valueOf(0));
 
-        // === CREAR COCHES ===
-        coches = new JLabel[numCoches];
-        for (int i = 0; i < numCoches; i++) {
-        	ImageIcon cocheImagenOriginal = new ImageIcon(getClass().getResource("/Resources/velo" + (i + 1) + ".png"));
-            Image imagenEscalada = cocheImagenOriginal.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
-            ImageIcon cocheImagenEscalada = new ImageIcon(imagenEscalada);
+        // === CREAR RAPTORS ===
+        raptors = new JLabel[numRaptors];
+        for (int i = 0; i < numRaptors; i++) {
+            ImageIcon raptorImagenOriginal = new ImageIcon(getClass().getResource("/Resources/velo" + (i + 1) + ".png"));
+            Image imagenEscalada = raptorImagenOriginal.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
+            ImageIcon raptorImagenEscalada = new ImageIcon(imagenEscalada);
 
-            coches[i] = new JLabel(cocheImagenEscalada);
-            coches[i].setBounds(30, 50 + i * 80, 80, 80);
-            layeredPane.add(coches[i], Integer.valueOf(1));
+            raptors[i] = new JLabel(raptorImagenEscalada);
+            raptors[i].setBounds(30, 50 + i * 80, 80, 80);
+            layeredPane.add(raptors[i], Integer.valueOf(1));
         }
 
         // === BOTÓN PARA INICIAR LA CARRERA ===
         botonIniciar = new JButton("Iniciar Carrera");
-        botonIniciar.setBounds(350, 10, 120, 30);
+        botonIniciar.setBounds(250, 10, 120, 30);
         botonIniciar.addActionListener(e -> iniciarCarrera());
         layeredPane.add(botonIniciar, Integer.valueOf(2));
+
+        // === BOTÓN PARA REINICIAR LA CARRERA ===
+        botonReiniciar = new JButton("Reiniciar Carrera");
+        botonReiniciar.setBounds(400, 10, 150, 30);
+        botonReiniciar.setEnabled(false); // Inicialmente deshabilitado
+        botonReiniciar.addActionListener(e -> reiniciarCarrera(layeredPane));
+        layeredPane.add(botonReiniciar, Integer.valueOf(2));
     }
 
     private void configurarParametros() {
-        // Solicitar número de coches
-        String inputCoches = JOptionPane.showInputDialog(null, "Ingrese el número de coches (mínimo 2, máximo 4):", "Configuración", JOptionPane.QUESTION_MESSAGE);
-        numCoches = Math.max(2, Math.min(4, Integer.parseInt(inputCoches))); // Validar el rango entre 2 y 4
+        String inputRaptors = JOptionPane.showInputDialog(null, "Ingrese el número de raptors (mínimo 2, máximo 4):", "Configuración", JOptionPane.QUESTION_MESSAGE);
+        numRaptors = Math.max(2, Math.min(4, Integer.parseInt(inputRaptors)));
 
-        // Solicitar distancia de la carrera
         String inputDistancia = JOptionPane.showInputDialog(null, "Ingrese la distancia de la carrera (mínimo 50, máximo 500):", "Configuración", JOptionPane.QUESTION_MESSAGE);
-        distancia = Math.max(50, Math.min(500, Integer.parseInt(inputDistancia))); // Validar el rango entre 50 y 500
+        distancia = Math.max(50, Math.min(500, Integer.parseInt(inputDistancia)));
     }
 
     private void iniciarCarrera() {
-        botonIniciar.setEnabled(false); // Deshabilitar botón mientras la carrera está en progreso
+        botonIniciar.setEnabled(false);
+        botonReiniciar.setEnabled(false);
 
-        for (int i = 0; i < numCoches; i++) {
-            int cocheId = i;
-            new Thread(() -> moverCoche(cocheId)).start(); // Crear un hilo para cada coche
+        for (int i = 0; i < numRaptors; i++) {
+            int raptorId = i;
+            new Thread(() -> moverRaptor(raptorId)).start();
         }
     }
 
-    private void moverCoche(int cocheId) {
+    private void reiniciarCarrera(JLayeredPane layeredPane) {
+        // Reiniciar posiciones de los raptors
+        for (int i = 0; i < numRaptors; i++) {
+            raptors[i].setLocation(30, 50 + i * 80);
+        }
+
+        botonIniciar.setEnabled(true);
+        botonReiniciar.setEnabled(false); // Deshabilitar botón de reinicio hasta que se use el de iniciar
+    }
+
+    private void moverRaptor(int raptorId) {
         try {
             int progreso = 0;
 
             while (progreso < distancia) {
-                Thread.sleep(100); // Simular tiempo entre movimientos
-                progreso += (int) (Math.random() * 10); // Incrementar la posición aleatoriamente
+                Thread.sleep(100);
+                progreso += (int) (Math.random() * 10);
 
-                // Usar semáforo para sincronizar el acceso a la GUI
                 semaforo.acquire();
                 try {
-                    int x = 30 + progreso * (700 / distancia); // Calcular nueva posición
-                    coches[cocheId].setLocation(x, coches[cocheId].getY());
+                    int x = 30 + progreso * (700 / distancia);
+                    raptors[raptorId].setLocation(x, raptors[raptorId].getY());
                 } finally {
                     semaforo.release();
                 }
             }
 
-            System.out.println("El coche " + (cocheId + 1) + " ha terminado la carrera.");
+            System.out.println("El raptor " + (raptorId + 1) + " ha terminado la carrera.");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+
+        // Habilitar el botón de reinicio al final de la carrera
+        SwingUtilities.invokeLater(() -> botonReiniciar.setEnabled(true));
     }
 
     public static void main(String[] args) {
