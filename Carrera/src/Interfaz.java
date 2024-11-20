@@ -27,7 +27,7 @@ public class Interfaz extends JFrame {
         add(layeredPane);
 
         // === CARGAR IMAGEN DE FONDO ===
-        ImageIcon fondoImagen = new ImageIcon("src/Resources/fondo.png");
+        ImageIcon fondoImagen = new ImageIcon(getClass().getResource("/Resources/fondo.png"));
         JLabel fondo = new JLabel(fondoImagen);
         fondo.setBounds(0, 0, 800, 400);
         layeredPane.add(fondo, Integer.valueOf(0));
@@ -35,7 +35,7 @@ public class Interfaz extends JFrame {
         // === CREAR COCHES ===
         coches = new JLabel[numCoches];
         for (int i = 0; i < numCoches; i++) {
-            ImageIcon cocheImagenOriginal = new ImageIcon("src/Resources/velo" + (i + 1) + ".png");
+        	ImageIcon cocheImagenOriginal = new ImageIcon(getClass().getResource("/Resources/velo" + (i + 1) + ".png"));
             Image imagenEscalada = cocheImagenOriginal.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
             ImageIcon cocheImagenEscalada = new ImageIcon(imagenEscalada);
 
