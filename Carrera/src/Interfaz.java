@@ -1,20 +1,23 @@
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 
 public class Interfaz extends JFrame {
     private JLabel[] raptors; // Representa los raptors en la carrera
+    private JLabel[] etiquetasProgreso; // Etiquetas para mostrar el progreso de cada raptor
     private JButton botonIniciar; // Botón para iniciar la carrera
     private JButton botonReiniciar; // Botón para reiniciar la carrera
-    private int numRaptors; // Número de raptors
+    private JTextField campoDistancia; // Campo de texto para ingresar la distancia de la carrera
+    private final int numRaptors = 4; // Número fijo de raptors
     private int distancia; // Distancia de la carrera
     private Semaphore semaforo; // Semáforo para sincronizar los raptors
+    private List<Integer> posiciones; // Lista para almacenar el orden de llegada de los raptors
 
     public Interfaz() {
-        configurarParametros();
-
         setTitle("Carrera de Raptors");
-        setSize(800, 400);
+        setSize(870, 520); // Ajuste del tamaño para visibilidad de FINISH
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(null);
 
@@ -23,63 +26,106 @@ public class Interfaz extends JFrame {
 
         // === CREAR JLayeredPane PARA CONTROLAR CAPAS ===
         JLayeredPane layeredPane = new JLayeredPane();
-        layeredPane.setBounds(0, 0, 800, 400);
+        layeredPane.setBounds(0, 0, 850, 400);
         add(layeredPane);
 
         // === CARGAR IMAGEN DE FONDO ===
         ImageIcon fondoImagen = new ImageIcon(getClass().getResource("/Resources/fondo.png"));
         JLabel fondo = new JLabel(fondoImagen);
-        fondo.setBounds(0, 0, 800, 400);
+        fondo.setBounds(0, 0, 850, 400);
         layeredPane.add(fondo, Integer.valueOf(0));
 
         // === CREAR RAPTORS ===
         raptors = new JLabel[numRaptors];
+        etiquetasProgreso = new JLabel[numRaptors];
+        int espacioEntreLineas = 90; // Ajuste para que cada raptor tenga su línea bien alineada
+        int ajusteVertical = 10; // Ajuste vertical para centrar en la línea adecuadamente
+
         for (int i = 0; i < numRaptors; i++) {
             ImageIcon raptorImagenOriginal = new ImageIcon(getClass().getResource("/Resources/velo" + (i + 1) + ".png"));
             Image imagenEscalada = raptorImagenOriginal.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
             ImageIcon raptorImagenEscalada = new ImageIcon(imagenEscalada);
 
+            // Ajustar posición vertical de cada raptor
             raptors[i] = new JLabel(raptorImagenEscalada);
-            raptors[i].setBounds(30, 50 + i * 80, 80, 80);
+            raptors[i].setBounds(50, (espacioEntreLineas * i) + ajusteVertical, 80, 80);
             layeredPane.add(raptors[i], Integer.valueOf(1));
+
+            // Inicializar etiquetas de progreso (invisibles al inicio)
+            etiquetasProgreso[i] = new JLabel("0%");
+            etiquetasProgreso[i].setBounds(140, (espacioEntreLineas * i) + ajusteVertical + 30, 50, 20);
+            etiquetasProgreso[i].setForeground(Color.YELLOW);
+            etiquetasProgreso[i].setFont(new Font("Arial", Font.BOLD, 14));
+            etiquetasProgreso[i].setVisible(false); // Invisibles hasta que comience la carrera
+            layeredPane.add(etiquetasProgreso[i], Integer.valueOf(2));
         }
+
+        // === CAMPO DE TEXTO PARA DISTANCIA ===
+        JLabel etiquetaDistancia = new JLabel("Distancia:");
+        etiquetaDistancia.setBounds(10, 420, 70, 30);
+        add(etiquetaDistancia);
+
+        campoDistancia = new JTextField("100"); // Valor predeterminado de distancia
+        campoDistancia.setBounds(80, 420, 60, 30);
+        add(campoDistancia);
 
         // === BOTÓN PARA INICIAR LA CARRERA ===
         botonIniciar = new JButton("Iniciar Carrera");
-        botonIniciar.setBounds(250, 10, 120, 30);
+        botonIniciar.setBounds(300, 420, 120, 30);
+        botonIniciar.setBackground(new Color(34, 139, 34)); // Color verde temático
+        botonIniciar.setForeground(Color.WHITE);
+        botonIniciar.setFocusPainted(false);
         botonIniciar.addActionListener(e -> iniciarCarrera());
-        layeredPane.add(botonIniciar, Integer.valueOf(2));
+        add(botonIniciar);
 
         // === BOTÓN PARA REINICIAR LA CARRERA ===
         botonReiniciar = new JButton("Reiniciar Carrera");
-        botonReiniciar.setBounds(400, 10, 150, 30);
+        botonReiniciar.setBounds(450, 420, 150, 30);
+        botonReiniciar.setBackground(new Color(205, 92, 92)); // Color rojo temático
+        botonReiniciar.setForeground(Color.WHITE);
+        botonReiniciar.setFocusPainted(false);
         botonReiniciar.setEnabled(false); // Inicialmente deshabilitado
         botonReiniciar.addActionListener(e -> reiniciarCarrera(layeredPane));
-        layeredPane.add(botonReiniciar, Integer.valueOf(2));
-    }
-
-    private void configurarParametros() {
-        String inputRaptors = JOptionPane.showInputDialog(null, "Ingrese el número de raptors (mínimo 2, máximo 4):", "Configuración", JOptionPane.QUESTION_MESSAGE);
-        numRaptors = Math.max(2, Math.min(4, Integer.parseInt(inputRaptors)));
-
-        String inputDistancia = JOptionPane.showInputDialog(null, "Ingrese la distancia de la carrera (mínimo 50, máximo 500):", "Configuración", JOptionPane.QUESTION_MESSAGE);
-        distancia = Math.max(50, Math.min(500, Integer.parseInt(inputDistancia)));
+        add(botonReiniciar);
     }
 
     private void iniciarCarrera() {
+        try {
+            // Leer distancia desde el campo de texto
+            distancia = Integer.parseInt(campoDistancia.getText());
+            if (distancia < 50 || distancia > 500) {
+                throw new IllegalArgumentException("La distancia debe estar entre 50 y 500.");
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Por favor, ingrese un valor numérico válido para la distancia.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         botonIniciar.setEnabled(false);
         botonReiniciar.setEnabled(false);
 
+        // Inicializar la lista de posiciones
+        posiciones = new ArrayList<>();
+
         for (int i = 0; i < numRaptors; i++) {
+            etiquetasProgreso[i].setVisible(true); // Hacer visible la etiqueta de progreso cuando el raptor comienza
             int raptorId = i;
             new Thread(() -> moverRaptor(raptorId)).start();
         }
     }
 
     private void reiniciarCarrera(JLayeredPane layeredPane) {
-        // Reiniciar posiciones de los raptors
+        // Reiniciar posiciones de los raptors y etiquetas de progreso
+        int espacioEntreLineas = 90;
+        int ajusteVertical = 10;
+
         for (int i = 0; i < numRaptors; i++) {
-            raptors[i].setLocation(30, 50 + i * 80);
+            raptors[i].setLocation(50, (espacioEntreLineas * i) + ajusteVertical);
+            etiquetasProgreso[i].setText("0%");
+            etiquetasProgreso[i].setVisible(false); // Ocultar las etiquetas de progreso al reiniciar
         }
 
         botonIniciar.setEnabled(true);
@@ -89,6 +135,7 @@ public class Interfaz extends JFrame {
     private void moverRaptor(int raptorId) {
         try {
             int progreso = 0;
+            int anchoTotalPista = 750; // Ajustar el ancho para que los raptors lleguen al final correctamente
 
             while (progreso < distancia) {
                 Thread.sleep(100);
@@ -96,14 +143,26 @@ public class Interfaz extends JFrame {
 
                 semaforo.acquire();
                 try {
-                    int x = 30 + progreso * (700 / distancia);
+                    int x = 50 + (progreso * (anchoTotalPista - 50) / distancia);
+                    x = Math.min(x, anchoTotalPista); // Asegurarse de que no pase del final de la pista
                     raptors[raptorId].setLocation(x, raptors[raptorId].getY());
+
+                    // Actualizar la etiqueta de progreso y moverla junto al raptor
+                    int progresoPorcentaje = (progreso * 100) / distancia;
+                    etiquetasProgreso[raptorId].setText(progresoPorcentaje + "%");
+                    etiquetasProgreso[raptorId].setLocation(x + 90, raptors[raptorId].getY() + 30); // Mover la etiqueta junto al raptor
                 } finally {
                     semaforo.release();
                 }
             }
 
             System.out.println("El raptor " + (raptorId + 1) + " ha terminado la carrera.");
+            synchronized (posiciones) {
+                posiciones.add(raptorId + 1);
+                if (posiciones.size() == numRaptors) {
+                    mostrarResultados();
+                }
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -112,7 +171,16 @@ public class Interfaz extends JFrame {
         SwingUtilities.invokeLater(() -> botonReiniciar.setEnabled(true));
     }
 
+    private void mostrarResultados() {
+        StringBuilder resultados = new StringBuilder("¡Ganador! --> Raptor " + posiciones.get(0) + "\n\nPosiciones finales:\n");
+        for (int i = 0; i < posiciones.size(); i++) {
+            resultados.append((i + 1)).append(". Raptor ").append(posiciones.get(i)).append("\n");
+        }
+        JOptionPane.showMessageDialog(this, resultados.toString(), "Resultados", JOptionPane.INFORMATION_MESSAGE);
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new Interfaz().setVisible(true));
     }
 }
+
