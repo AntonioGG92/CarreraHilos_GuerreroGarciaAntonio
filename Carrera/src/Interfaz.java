@@ -8,16 +8,16 @@ import java.net.URL;
 import java.io.IOException;
 
 public class Interfaz extends JFrame {
-    private JLabel[] raptors; // Representa a los raptors en la carrera
-    private JLabel[] etiquetasProgreso; // Etiquetas para mostrar el progreso de cada raptor
-    private JButton botonIniciar; // Botón para iniciar la carrera
-    private JButton botonReiniciar; // Botón para reiniciar la carrera
-    private JTextField campoDistancia; // Campo de texto para ingresar la distancia de la carrera
-    private final int numRaptors = 4; // Número fijo de raptors
-    private int distancia; // Distancia de la carrera
-    private Semaphore semaforo; // Semáforo para sincronizar los raptors
-    private List<Integer> posiciones; // Lista para almacenar el orden de llegada de los raptors
-    private Clip musicaFondo; // Clip para reproducir la música de fondo
+    private JLabel[] raptors; 
+    private JLabel[] etiquetasProgreso; 
+    private JButton botonIniciar;
+    private JButton botonReiniciar;
+    private JTextField campoDistancia;
+    private final int numRaptors = 4;
+    private int distancia; 
+    private Semaphore semaforo;
+    private List<Integer> posiciones; 
+    private Clip musicaFondo;
 
     public Interfaz() {
         setTitle("Carrera de Raptors");
@@ -39,11 +39,17 @@ public class Interfaz extends JFrame {
         fondo.setBounds(0, 0, 850, 400);
         panelCapas.add(fondo, Integer.valueOf(0));
 
+        // === LOGO EN EL CENTRO DEL FONDO ===
+        ImageIcon logoImagen = new ImageIcon(getClass().getResource("/Resources/logoDinoRace.png"));
+        JLabel logo = new JLabel(logoImagen);
+        logo.setBounds(300, 0, 250, 150); // Aumentar la altura del logo para asegurarse de que se vea completo
+        panelCapas.add(logo, Integer.valueOf(1)); // Añadir el logo en la capa superior del fondo
+
         // === CREAR RAPTORS ===
         raptors = new JLabel[numRaptors];
         etiquetasProgreso = new JLabel[numRaptors];
         int espacioEntreLineas = 90; // Espacio entre las líneas de los raptors
-        int ajusteVertical = 10; // Ajuste vertical para centrar en la línea adecuadamente
+        int ajusteVertical = 60; // Ajuste vertical para que los raptors empiecen más abajo y el logo tenga espacio
 
         for (int i = 0; i < numRaptors; i++) {
             ImageIcon raptorImagenOriginal = new ImageIcon(getClass().getResource("/Resources/velo" + (i + 1) + ".png"));
@@ -53,7 +59,7 @@ public class Interfaz extends JFrame {
             // Ajustar posición vertical de cada raptor
             raptors[i] = new JLabel(raptorImagenEscalada);
             raptors[i].setBounds(50, (espacioEntreLineas * i) + ajusteVertical, 80, 80);
-            panelCapas.add(raptors[i], Integer.valueOf(1));
+            panelCapas.add(raptors[i], Integer.valueOf(2));
 
             // Inicializar etiquetas de progreso (invisibles al inicio)
             etiquetasProgreso[i] = new JLabel("0%");
@@ -61,36 +67,44 @@ public class Interfaz extends JFrame {
             etiquetasProgreso[i].setForeground(Color.YELLOW);
             etiquetasProgreso[i].setFont(new Font("Arial", Font.BOLD, 16)); // Aumentar el tamaño de la fuente para mejor visibilidad
             etiquetasProgreso[i].setVisible(false); // Invisibles hasta que comience la carrera
-            panelCapas.add(etiquetasProgreso[i], Integer.valueOf(2));
+            panelCapas.add(etiquetasProgreso[i], Integer.valueOf(3));
         }
 
+        // === PANEL INFERIOR PARA FONDO DE BOTONES Y CAMPO DE DISTANCIA ===
+        JPanel panelInferior = new JPanel();
+        panelInferior.setBounds(0, 400, 870, 120);
+        panelInferior.setBackground(new Color(34, 49, 63)); // Color oscuro que pega mejor con la temática de la jungla
+        panelInferior.setLayout(null);
+        add(panelInferior);
+
         // === CAMPO DE TEXTO PARA DISTANCIA ===
-        JLabel etiquetaDistancia = new JLabel("Distancia:");
-        etiquetaDistancia.setBounds(10, 420, 70, 30);
-        add(etiquetaDistancia);
+        JLabel etiquetaDistancia = new JLabel("Distancia (50 - 500):");
+        etiquetaDistancia.setBounds(10, 10, 150, 30);
+        etiquetaDistancia.setForeground(Color.YELLOW); // Cambiar color del texto a amarillo
+        panelInferior.add(etiquetaDistancia);
 
         campoDistancia = new JTextField("100"); // Valor predeterminado de distancia
-        campoDistancia.setBounds(80, 420, 60, 30);
-        add(campoDistancia);
+        campoDistancia.setBounds(160, 10, 60, 30);
+        panelInferior.add(campoDistancia);
 
         // === BOTÓN PARA INICIAR LA CARRERA ===
         botonIniciar = new JButton("Iniciar Carrera");
-        botonIniciar.setBounds(300, 420, 120, 30);
-        botonIniciar.setBackground(new Color(34, 139, 34)); // Color verde temático
+        botonIniciar.setBounds(300, 10, 120, 30);
+        botonIniciar.setBackground(new Color(85, 107, 47)); // Un color verde que pega mejor con la temática de jungla
         botonIniciar.setForeground(Color.WHITE);
         botonIniciar.setFocusPainted(false);
         botonIniciar.addActionListener(e -> iniciarCarrera());
-        add(botonIniciar);
+        panelInferior.add(botonIniciar);
 
         // === BOTÓN PARA REINICIAR LA CARRERA ===
         botonReiniciar = new JButton("Reiniciar Carrera");
-        botonReiniciar.setBounds(450, 420, 150, 30);
-        botonReiniciar.setBackground(new Color(205, 92, 92)); // Color rojo temático
+        botonReiniciar.setBounds(450, 10, 150, 30);
+        botonReiniciar.setBackground(new Color(139, 0, 0)); // Un color rojo oscuro que pega mejor con la temática de jungla
         botonReiniciar.setForeground(Color.WHITE);
         botonReiniciar.setFocusPainted(false);
         botonReiniciar.setEnabled(false); // Inicialmente deshabilitado
         botonReiniciar.addActionListener(e -> reiniciarCarrera(panelCapas));
-        add(botonReiniciar);
+        panelInferior.add(botonReiniciar);
 
         // === INICIAR MÚSICA DE FONDO ===
         reproducirMusicaFondo();
@@ -129,7 +143,7 @@ public class Interfaz extends JFrame {
     private void reiniciarCarrera(JLayeredPane panelCapas) {
         // Reiniciar posiciones de los raptors y etiquetas de progreso
         int espacioEntreLineas = 90;
-        int ajusteVertical = 10;
+        int ajusteVertical = 60;
 
         for (int i = 0; i < numRaptors; i++) {
             raptors[i].setLocation(50, (espacioEntreLineas * i) + ajusteVertical);
@@ -201,6 +215,11 @@ public class Interfaz extends JFrame {
             AudioInputStream audioStream = AudioSystem.getAudioInputStream(musicaURL);
             musicaFondo = AudioSystem.getClip();
             musicaFondo.open(audioStream);
+
+            // Bajar el volumen de la música de fondo
+            FloatControl controlVolumen = (FloatControl) musicaFondo.getControl(FloatControl.Type.MASTER_GAIN);
+            controlVolumen.setValue(-20.0f); // Reducir el volumen
+
             musicaFondo.loop(Clip.LOOP_CONTINUOUSLY); // Reproducir en bucle
         } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
             System.err.println("No se pudo reproducir la música de fondo: " + e.getMessage());
