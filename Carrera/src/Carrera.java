@@ -1,49 +1,43 @@
 import java.util.concurrent.Semaphore;
 
 public class Carrera {
-    private final int numCoches; // Número de raptors que participan en la carrera
+    private final int numCoches; // Número de raptors 
     private final int distancia; // Distancia de la carrera
-    private CarreraListener listener; // Interfaz que recibe eventos durante la carrera
-
-    // Constructor para inicializar el número de raptors y la distancia
+    private CarreraListener listener; 
+    
     public Carrera(int numCoches, int distancia) {
         this.numCoches = numCoches;
         this.distancia = distancia;
     }
 
-    // Setter para registrar un listener que reciba actualizaciones del progreso
     public void setListener(CarreraListener listener) {
         this.listener = listener;
     }
 
-    // Método para iniciar la carrera
     public void iniciarCarrera() {
-        // Creamos un arreglo de hilos para cada raptor
+        
         Thread[] hilosCoches = new Thread[numCoches];
 
-        // Inicializamos e iniciamos cada hilo de la carrera
         for (int i = 0; i < numCoches; i++) {
             final int id = i;
             hilosCoches[i] = new Thread(() -> {
                 int progreso = 0;
-                int velocidad = (int) (Math.random() * 10 + 1); // Velocidad aleatoria entre 1 y 10
+                int velocidad = (int) (Math.random() * 10 + 1); 
 
                 // Bucle para hacer avanzar al raptor hasta llegar a la meta
                 while (progreso < distancia) {
                     try {
                         Thread.sleep(200); // Simula el tiempo que pasa mientras el raptor avanza
-                        progreso += velocidad; // Aumenta la posición según la velocidad
+                        progreso += velocidad; 
 
-                        // Notificamos a la interfaz gráfica sobre el progreso del raptor
                         if (listener != null) {
                             listener.onProgresoActualizado(id, Math.min(progreso, distancia));
                         }
                     } catch (InterruptedException e) {
-                        e.printStackTrace(); // En caso de error, imprimimos la traza
+                        e.printStackTrace();
                     }
                 }
 
-                // Notificamos que el raptor ha llegado al final de la carrera
                 if (listener != null) {
                     listener.onCocheTerminado(id);
                 }
@@ -57,7 +51,7 @@ public class Carrera {
         new Thread(() -> {
             for (Thread hilo : hilosCoches) {
                 try {
-                    hilo.join(); // Espera a que el hilo del raptor termine
+                    hilo.join(); 
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -72,8 +66,8 @@ public class Carrera {
 
     // Interfaz para poder manejar los eventos de la carrera desde otra clase
     public interface CarreraListener {
-        void onProgresoActualizado(int cocheId, int progreso); // Evento para actualizar el progreso de un raptor
-        void onCocheTerminado(int cocheId); // Evento para indicar que un raptor ha terminado la carrera
-        void onCarreraTerminada(); // Evento para indicar que la carrera ha finalizado
+        void onProgresoActualizado(int cocheId, int progreso); 
+        void onCocheTerminado(int cocheId); 
+        void onCarreraTerminada();
     }
 }
